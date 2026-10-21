@@ -1,4 +1,5 @@
 import { HealthStatus } from "./components/HealthStatus";
+import { AnalysisResult } from "./components/AnalysisResult";
 import { fetchDashboard, type DashboardData } from "./api/dashboard";
 import { useEffect, useState } from "react";
 import {
@@ -299,12 +300,39 @@ function App() {
             </div>
             {dataState !== "loading" && <button className="export-button" onClick={() => setReloadToken((value) => value + 1)}>Retry</button>}
           </div>}
-          {active !== "Overview" ? (
+          {active === "Complaint Analysis" ? (
+            <section className="panel p-6" aria-label="Stored complaint intelligence">
+              <h2>Complaint intelligence</h2>
+              <p className="mt-3 text-slate-300">
+                AI suggestions require human review. Priority follows configured rules.
+                An operator can classify complaints through the API.
+              </p>
+              <button className="export-button mt-5" disabled={dataState === "loading"}
+                onClick={() => setReloadToken((value) => value + 1)}>
+                Refresh analysis
+              </button>
+              <div className="table-wrap mt-5">
+                <table>
+                  <thead><tr><th>COMPLAINT</th><th>ORIGINAL CATEGORY / PRIORITY</th><th>AI ANALYSIS</th></tr></thead>
+                  <tbody>{visibleComplaints.map((complaint) => (
+                    <tr key={complaint.complaint_id}>
+                      <td><div className="complaint-title">{complaint.title}</div>
+                        <div className="complaint-id">{complaint.complaint_id}</div></td>
+                      <td>{complaint.category} / {complaint.priority}</td>
+                      <td><AnalysisResult analysis={complaint.analysis} /></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+                {dataState !== "loading" && visibleComplaints.length === 0 &&
+                  <p className="empty-state">No complaints to analyze.</p>}
+              </div>
+              <p className="mt-3 text-slate-300">Showing the latest attempt for the first {visibleComplaints.length} matching complaints.</p>
+            </section>
+          ) : active !== "Overview" ? (
             <section className="panel py-12 text-center">
               <h2 className="text-xl font-semibold">{active}</h2>
               <p className="mt-3 text-slate-300">
-                Planned feature — not implemented in Phase 2. No AI analysis has
-                been performed.
+                Planned feature — not implemented in Phase 3.
               </p>
               <button
                 className="export-button mx-auto mt-5"
@@ -500,7 +528,8 @@ function App() {
                         <th>CATEGORY</th>
                         <th>CHANNEL</th>
                         <th>RECEIVED</th>
-                        <th>PRIORITY</th>
+                        <th>ORIGINAL PRIORITY</th>
+                        <th>AI ANALYSIS</th>
                         <th aria-label="Open complaint" />
                       </tr>
                     </thead>
@@ -530,6 +559,7 @@ function App() {
                               {complaint.priority}
                             </span>
                           </td>
+                          <td><AnalysisResult analysis={complaint.analysis} /></td>
                           <td>
                             <button
                               disabled
@@ -606,7 +636,7 @@ function App() {
               <i /> Database-backed dashboard · Imported records only
             </span>
             <span>
-              NeuroOps AI <b>·</b> Phase 2
+              NeuroOps AI <b>·</b> Phase 3
             </span>
           </footer>
         </div>

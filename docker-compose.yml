@@ -10,6 +10,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://neuroops:local_dev_only_change_me@db:5432/neuroops
       IMPORT_API_KEY: ${IMPORT_API_KEY:?Set IMPORT_API_KEY in your shell or .env before starting Compose}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      AI_RULES_JSON: ${AI_RULES_JSON:-{}}
     ports:
       - "127.0.0.1:8000:8000"
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"

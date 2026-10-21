@@ -6,6 +6,15 @@ export type ApiComplaint = {
   priority: "low" | "medium" | "high";
   channel: string;
   received_date: string;
+  analysis?: {
+    status: "completed" | "failed";
+    category: string | null;
+    sentiment: "Positive" | "Neutral" | "Negative" | null;
+    priority: "low" | "medium" | "high" | null;
+    error_code: string | null;
+    human_verified: false;
+    details: { priority_rule?: string };
+  } | null;
 };
 
 export type DashboardData = {

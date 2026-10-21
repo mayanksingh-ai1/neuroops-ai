@@ -34,6 +34,15 @@ describe("database-backed dashboard", () => {
     expect(fetch).toHaveBeenCalledWith("/api/complaints?limit=10&q=refund", expect.anything());
   });
 
+  it("opens complaint intelligence and displays the unanalyzed state", async () => {
+    mockApi(); render(<App />);
+    await screen.findByText("Refund still pending");
+    fireEvent.click(screen.getByRole("button", { name: "Complaint Analysis" }));
+    expect(screen.getByRole("region", { name: "Stored complaint intelligence" })).toBeInTheDocument();
+    expect(screen.getAllByText("Not analyzed")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Refresh analysis" })).toBeEnabled();
+  });
+
   it("shows the empty state when the database contains no complaints", async () => {
     vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve({ ok: true, json: async () => url.includes("complaints") ? { total: 0, items: [] } : url.includes("status") ? { total: 0, counts: { open: 0, in_progress: 0, resolved: 0 } } : [] })));
     render(<App />);

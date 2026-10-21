@@ -1038,3 +1038,15 @@ input:focus-visible {
     transition: none !important;
   }
 }
+.analysis-result {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 220px;
+  max-width: 300px;
+  white-space: normal;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+.analysis-result strong { color: #c4b5fd; }
+.analysis-result small { color: #a8b4cc; }

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from .database import get_engine, get_session
 from .ingestion import CSVError, MAX_BYTES, validate_csv
-from .models import Complaint
+from .models import Complaint, ComplaintAnalysis
 
 router = APIRouter(prefix='/api')
 DB = Annotated[Session, Depends(get_session)]
@@ -90,7 +90,18 @@ def complaints(session: DB, q: str = Query('', max_length=100),
     total = session.scalar(select(func.count()).select_from(statement.subquery()))
     rows = session.scalars(statement.order_by(Complaint.received_date.desc(), Complaint.complaint_id)
                            .limit(limit).offset(offset)).all()
+    from .analysis_routes import serialize_analysis
+    # Fetch the latest attempt per visible complaint in one query.
+    ranked = select(
+        ComplaintAnalysis.id,
+        func.row_number().over(partition_by=ComplaintAnalysis.complaint_id,
+            order_by=(ComplaintAnalysis.created_at.desc(), ComplaintAnalysis.id.desc())).label('rank')
+    ).where(ComplaintAnalysis.complaint_id.in_([row.complaint_id for row in rows])).subquery()
+    analyses = session.scalars(select(ComplaintAnalysis).join(
+        ranked, ranked.c.id == ComplaintAnalysis.id).where(ranked.c.rank == 1)).all()
+    latest = {a.complaint_id: serialize_analysis(a) for a in analyses}
     return {'total': total, 'items': [{'complaint_id': row.complaint_id, 'title': row.title,
+        'analysis': latest.get(row.complaint_id),
         'category': row.category, 'status': row.status, 'priority': row.priority,
         'channel': row.channel, 'received_date': row.received_date} for row in rows]}
 

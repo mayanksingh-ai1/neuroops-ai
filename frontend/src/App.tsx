@@ -3,7 +3,9 @@ import { AnalysisResult } from "./components/AnalysisResult";
 import { KnowledgeBase } from "./components/KnowledgeBase";
 import { AgentWorkspace } from "./components/AgentWorkspace";
 import { EvaluationWorkspace } from "./components/EvaluationWorkspace";
+import { ResearchWorkspace } from "./components/ResearchWorkspace";
 import { ComplaintImportModal } from "./components/ComplaintImportModal";
+import { ComplaintClassifyModal } from "./components/ComplaintClassifyModal";
 import { fetchDashboard, type DashboardData } from "./api/dashboard";
 import { useEffect, useState } from "react";
 import {
@@ -213,6 +215,8 @@ function App() {
   const [dataState, setDataState] = useState<"loading" | "ready" | "empty" | "error">("loading");
   const [reloadToken, setReloadToken] = useState(0);
   const [showImport, setShowImport] = useState(false);
+  const [showClassify, setShowClassify] = useState(false);
+  const [classifyTargetId, setClassifyTargetId] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     setDataState("loading");
@@ -298,7 +302,7 @@ function App() {
               </button>
             </div>
           </div>
-          {!["Knowledge Base", "AI Agent", "LLM Evaluation"].includes(active) && dataState !== "ready" && <div className="notice">
+          {!["Knowledge Base", "AI Agent", "LLM Evaluation", "AI Research"].includes(active) && dataState !== "ready" && <div className="notice">
             <div className="notice-icon">
               <AlertCircle size={17} />
             </div>
@@ -328,9 +332,20 @@ function App() {
               <h2>Complaint intelligence</h2>
               <p className="mt-3 text-slate-300">
                 AI suggestions require human review. Priority follows configured rules.
-                An operator can classify complaints through the API.
+                An operator can classify complaints using the trigger below or through the API.
               </p>
               <div style={{ display: "flex", gap: "10px", marginTop: "20px", flexWrap: "wrap" }}>
+                <button
+                  className="export-button"
+                  style={{ background: "#4f46e5", color: "#ffffff", display: "flex", alignItems: "center", gap: "6px" }}
+                  disabled={dataState === "loading" || visibleComplaints.length === 0}
+                  onClick={() => {
+                    setClassifyTargetId(null);
+                    setShowClassify(true);
+                  }}
+                >
+                  <Sparkles size={16} /> Classify Complaints
+                </button>
                 <button className="export-button" disabled={dataState === "loading"}
                   onClick={() => setReloadToken((value) => value + 1)}>
                   Refresh analysis
@@ -341,13 +356,25 @@ function App() {
               </div>
               <div className="table-wrap mt-5">
                 <table>
-                  <thead><tr><th>COMPLAINT</th><th>ORIGINAL CATEGORY / PRIORITY</th><th>AI ANALYSIS</th></tr></thead>
+                  <thead><tr><th>COMPLAINT</th><th>ORIGINAL CATEGORY / PRIORITY</th><th>AI ANALYSIS</th><th>ACTIONS</th></tr></thead>
                   <tbody>{visibleComplaints.map((complaint) => (
                     <tr key={complaint.complaint_id}>
                       <td><div className="complaint-title">{complaint.title}</div>
                         <div className="complaint-id">{complaint.complaint_id}</div></td>
                       <td>{complaint.category} / {complaint.priority}</td>
                       <td><AnalysisResult analysis={complaint.analysis} /></td>
+                      <td>
+                        <button
+                          className="text-link"
+                          style={{ fontSize: "0.8rem", cursor: "pointer", border: "none", background: "none", padding: "4px" }}
+                          onClick={() => {
+                            setClassifyTargetId(complaint.complaint_id);
+                            setShowClassify(true);
+                          }}
+                        >
+                          {complaint.analysis?.status === "completed" ? "Re-classify" : "Classify"}
+                        </button>
+                      </td>
                     </tr>
                   ))}</tbody>
                 </table>
@@ -356,6 +383,8 @@ function App() {
               </div>
               <p className="mt-3 text-slate-300">Showing the latest attempt for the first {visibleComplaints.length} matching complaints.</p>
             </section>
+          ) : active === "AI Research" ? (
+            <ResearchWorkspace />
           ) : active !== "Overview" ? (
             <section className="panel py-12 text-center">
               <h2 className="text-xl font-semibold">{active}</h2>
@@ -672,6 +701,18 @@ function App() {
       <ComplaintImportModal
         open={showImport}
         onClose={() => setShowImport(false)}
+        onSuccess={() => {
+          setReloadToken((val) => val + 1);
+        }}
+      />
+      <ComplaintClassifyModal
+        open={showClassify}
+        complaints={visibleComplaints}
+        selectedComplaintId={classifyTargetId}
+        onClose={() => {
+          setShowClassify(false);
+          setClassifyTargetId(null);
+        }}
         onSuccess={() => {
           setReloadToken((val) => val + 1);
         }}

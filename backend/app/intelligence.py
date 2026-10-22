@@ -68,6 +68,42 @@ def assess_priority(text: str, sentiment: str, rules: Settings) -> tuple[str, st
 
 
 def classify(text: str, rules: Settings) -> tuple[ModelOutput, dict]:
+    mock_mode = os.getenv('MOCK_LLM_PROVIDER', '').strip().lower() in ('true', '1', 'yes')
+    if mock_mode:
+        matched_category = 'Other'
+        lower_text = text.lower()
+        if any(w in lower_text for w in ('delivery', 'delay', 'delayed', 'late', 'parcel', 'shipping', 'arrived')):
+            matched_category = 'Delivery Delay'
+        elif any(w in lower_text for w in ('refund', 'money', 'payment', 'charged', 'return', 'returned')):
+            matched_category = 'Refund Issue'
+        elif any(w in lower_text for w in ('damaged', 'broken', 'cracked')):
+            matched_category = 'Damaged Product'
+        elif 'wrong' in lower_text:
+            matched_category = 'Wrong Item'
+        elif any(w in lower_text for w in ('defective', 'poor', 'quality')):
+            matched_category = 'Product Quality'
+        elif any(w in lower_text for w in ('support', 'service', 'rude', 'agent')):
+            matched_category = 'Customer Support'
+
+        if matched_category not in rules.categories:
+            matched_category = rules.categories[0] if rules.categories else 'Other'
+
+        neg_words = {'unhappy', 'disappointed', 'angry', 'terrible', 'bad', 'poor', 'defective', 'damaged', 'broken', 'rude', 'lost', 'delayed'}
+        pos_words = {'excellent', 'good', 'great', 'happy', 'satisfied', 'helpful', 'thanks', 'thank', 'resolved'}
+        words = set(lower_text.split())
+        if words & neg_words:
+            matched_sentiment = 'Negative'
+        elif words & pos_words:
+            matched_sentiment = 'Positive'
+        else:
+            matched_sentiment = 'Neutral'
+
+        return ModelOutput(category=matched_category, sentiment=matched_sentiment), {
+            'provider': 'mock', 'requested_model': 'mock-demo',
+            'returned_model': 'mock-demo-v1', 'prompt_version': '1',
+            'privacy_version': 'vocabulary-v1',
+        }
+
     key = os.getenv('OPENAI_API_KEY', '').strip()
     model = os.getenv('LLM_MODEL', '').strip()
     if not key:

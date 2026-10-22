@@ -24,4 +24,12 @@ describe("analysis results", () => {
     }} />);
     expect(screen.getByRole("status")).toHaveTextContent("Analysis failed: rate limited");
   });
+  it("clearly labels mock demo suggestion when provider is mock", () => {
+    render(<AnalysisResult analysis={{
+      status: "completed", category: "Delivery Delay", sentiment: "Neutral",
+      priority: "low", error_code: null, human_verified: false,
+      details: { priority_rule: "default", provider: "mock" },
+    }} />);
+    expect(screen.getByText("Mock demo suggestion · Unverified")).toBeInTheDocument();
+  });
 });

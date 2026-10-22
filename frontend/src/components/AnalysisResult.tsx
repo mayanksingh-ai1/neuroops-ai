@@ -8,10 +8,11 @@ export function AnalysisResult({ analysis }: { analysis: ApiComplaint["analysis"
       <small>Operator can retry via the API.</small>
     </span>;
   }
+  const isMock = (analysis.details as { provider?: string })?.provider === "mock";
   return <div className="analysis-result">
-    <strong>AI suggestion · Unverified</strong>
+    <strong>{isMock ? "Mock demo suggestion · Unverified" : "AI suggestion · Unverified"}</strong>
     <span>{analysis.category} · {analysis.sentiment}</span>
     <span>Suggested priority: {analysis.priority}</span>
-    <small>Rule: {analysis.details.priority_rule?.replace(/_/g, " ")} · Completed</small>
+    <small>Rule: {analysis.details?.priority_rule?.replace(/_/g, " ")} · Completed</small>
   </div>;
 }

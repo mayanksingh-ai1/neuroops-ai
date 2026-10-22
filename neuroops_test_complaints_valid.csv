@@ -1,0 +1,13 @@
+complaint_id,title,category,status,priority,channel,received_date
+TEST-C1001,Laptop delivery delayed with no tracking update,Delivery Delay,open,high,Email,2026-10-20
+TEST-C1002,Returned wireless headphones but refund not issued,Refund Issue,open,high,Web,2026-10-20
+TEST-C1003,Coffee machine arrived with cracked water tank leaking,Damaged Product,in_progress,high,Chat,2026-10-19
+TEST-C1004,Received red backpack instead of ordered blue backpack,Wrong Item,open,medium,Phone,2026-10-19
+TEST-C1005,Wireless mouse battery drains within two hours of charge,Product Quality,resolved,low,Web,2026-10-18
+TEST-C1006,Submitted three support tickets regarding missing warranty,Customer Support,open,medium,Email,2026-10-18
+TEST-C1007,Refund confirmation received but funds not in bank account,Refund Issue,in_progress,medium,Chat,2026-10-17
+TEST-C1008,Package marked shipped for over a week without delivery estimate,Delivery Delay,open,high,Email,2026-10-16
+TEST-C1009,External shipping box crushed but item interior intact,Damaged Product,resolved,low,Phone,2026-10-15
+TEST-C1010,Support ticket closed without addressing urgent account issue,Customer Support,open,high,Web,2026-10-14
+TEST-C1011,Replacement product arrived matching original specification,Wrong Item,resolved,low,Email,2026-10-13
+TEST-C1012,Smartphone overheating and discharging rapidly during normal calls,Product Quality,in_progress,medium,Chat,2026-10-12

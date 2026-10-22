@@ -24,6 +24,7 @@ def configuration(monkeypatch):
     monkeypatch.setenv('LLM_MODEL', 'mock-model')
     monkeypatch.setenv('IMPORT_API_KEY', 'x' * 32)
     monkeypatch.delenv('AI_RULES_JSON', raising=False)
+    monkeypatch.delenv('MOCK_LLM_PROVIDER', raising=False)
 
 
 def provider(monkeypatch, status=200, output=None, finish='stop', refusal=None):
@@ -205,3 +206,22 @@ def test_no_domain_text_does_not_call_provider(client, database, monkeypatch):
     database.commit()
     assert client.post('/api/complaints/CMP-1/classify', headers=HEADERS).status_code == 422
     assert captured == []
+
+
+def test_mock_llm_provider_classification(client, database, monkeypatch):
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('LLM_MODEL', raising=False)
+    monkeypatch.setenv('MOCK_LLM_PROVIDER', 'true')
+    # Should classify deterministically without any httpx client call
+    response = client.post('/api/complaints/CMP-1/classify', headers=HEADERS)
+    assert response.status_code == 200
+    data = response.json()
+    assert data['status'] == 'completed'
+    assert data['category'] == 'Refund Issue'
+    assert data['sentiment'] == 'Neutral'
+    assert data['details']['provider'] == 'mock'
+    assert data['details']['returned_model'] == 'mock-demo-v1'
+    # Also verify batch endpoint with mock mode
+    batch_res = client.post('/api/complaints/classify-batch', headers=HEADERS, json={'complaint_ids': ['CMP-1']})
+    assert batch_res.status_code == 200
+    assert batch_res.json()['items'][0]['status'] == 'completed'

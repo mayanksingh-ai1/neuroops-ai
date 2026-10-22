@@ -41,6 +41,16 @@ describe("database-backed dashboard", () => {
     expect(screen.getByRole("region", { name: "Stored complaint intelligence" })).toBeInTheDocument();
     expect(screen.getAllByText("Not analyzed")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Refresh analysis" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Classify Complaints/ })).toBeEnabled();
+  });
+
+  it("opens classification modal when Classify Complaints is clicked", async () => {
+    mockApi(); render(<App />);
+    await screen.findByText("Refund still pending");
+    fireEvent.click(screen.getByRole("button", { name: "Complaint Analysis" }));
+    fireEvent.click(screen.getByRole("button", { name: /Classify Complaints/ }));
+    expect(screen.getByRole("dialog", { name: /Run AI Classification/ })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Operator Key/)).toBeInTheDocument();
   });
 
   it("shows the empty state when the database contains no complaints", async () => {

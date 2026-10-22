@@ -14,7 +14,7 @@ export type ApiComplaint = {
     priority: "low" | "medium" | "high" | null;
     error_code: string | null;
     human_verified: false;
-    details: { priority_rule?: string };
+    details: { priority_rule?: string; provider?: string };
   } | null;
 };
 
@@ -90,4 +90,72 @@ export async function importComplaintsCsv(file: File, importKey: string): Promis
     throw new Error(message);
   }
   return data as ImportResult;
+}
+
+export type ClassifyItemResponse = {
+  id: string;
+  complaint_id: string;
+  status: "completed" | "failed" | "not_found";
+  category: string | null;
+  sentiment: "Positive" | "Neutral" | "Negative" | null;
+  priority: "low" | "medium" | "high" | null;
+  error_code: string | null;
+  human_verified: false;
+  details: { priority_rule?: string; provider?: string };
+  http_status?: number;
+};
+
+export async function classifyComplaint(complaintId: string, importKey: string): Promise<ClassifyItemResponse> {
+  const response = await apiFetch(`/api/complaints/${encodeURIComponent(complaintId)}/classify`, {
+    method: "POST",
+    headers: {
+      "X-Import-Key": importKey.trim(),
+    },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail = data?.detail;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail?.code
+          ? `Classification error: ${detail.code}`
+          : `Classification failed (${response.status})`;
+    throw new Error(message);
+  }
+  return data as ClassifyItemResponse;
+}
+
+export async function classifyBatch(
+  complaintIds: string[],
+  importKey: string
+): Promise<{ items: ClassifyItemResponse[] }> {
+  const results: ClassifyItemResponse[] = [];
+  const chunkSize = 5;
+  for (let i = 0; i < complaintIds.length; i += chunkSize) {
+    const chunk = complaintIds.slice(i, i + chunkSize);
+    const response = await apiFetch("/api/complaints/classify-batch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Import-Key": importKey.trim(),
+      },
+      body: JSON.stringify({ complaint_ids: chunk }),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const detail = data?.detail;
+      const message =
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ")
+            : `Batch classification failed (${response.status})`;
+      throw new Error(message);
+    }
+    if (data?.items) {
+      results.push(...data.items);
+    }
+  }
+  return { items: results };
 }

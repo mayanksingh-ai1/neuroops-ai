@@ -1,5 +1,8 @@
 import { HealthStatus } from "./components/HealthStatus";
 import { AnalysisResult } from "./components/AnalysisResult";
+import { KnowledgeBase } from "./components/KnowledgeBase";
+import { AgentWorkspace } from "./components/AgentWorkspace";
+import { EvaluationWorkspace } from "./components/EvaluationWorkspace";
 import { fetchDashboard, type DashboardData } from "./api/dashboard";
 import { useEffect, useState } from "react";
 import {
@@ -40,6 +43,7 @@ import {
 const navigation = [
   { label: "Overview", icon: LayoutDashboard },
   { label: "Complaint Analysis", icon: BarChart3 },
+  { label: "Knowledge Base", icon: FileText },
   { label: "AI Research", icon: Search },
   { label: "AI Agent", icon: Bot },
   { label: "LLM Evaluation", icon: ShieldCheck },
@@ -286,7 +290,7 @@ function App() {
               <Download size={16} /> Print dashboard
             </button>
           </div>
-          {dataState !== "ready" && <div className="notice">
+          {!["Knowledge Base", "AI Agent", "LLM Evaluation"].includes(active) && dataState !== "ready" && <div className="notice">
             <div className="notice-icon">
               <AlertCircle size={17} />
             </div>
@@ -300,7 +304,7 @@ function App() {
             </div>
             {dataState !== "loading" && <button className="export-button" onClick={() => setReloadToken((value) => value + 1)}>Retry</button>}
           </div>}
-          {active === "Complaint Analysis" ? (
+          {active === "LLM Evaluation" ? <EvaluationWorkspace /> : active === "AI Agent" ? <AgentWorkspace /> : active === "Knowledge Base" ? <KnowledgeBase /> : active === "Complaint Analysis" ? (
             <section className="panel p-6" aria-label="Stored complaint intelligence">
               <h2>Complaint intelligence</h2>
               <p className="mt-3 text-slate-300">
@@ -332,7 +336,7 @@ function App() {
             <section className="panel py-12 text-center">
               <h2 className="text-xl font-semibold">{active}</h2>
               <p className="mt-3 text-slate-300">
-                Planned feature — not implemented in Phase 3.
+                Planned feature — not implemented in Phase 6.
               </p>
               <button
                 className="export-button mx-auto mt-5"
@@ -636,7 +640,7 @@ function App() {
               <i /> Database-backed dashboard · Imported records only
             </span>
             <span>
-              NeuroOps AI <b>·</b> Phase 3
+              NeuroOps AI <b>·</b> Phase 6
             </span>
           </footer>
         </div>

@@ -21,7 +21,9 @@ def get_engine():
     url = os.getenv('DATABASE_URL', '')
     if not url.startswith('postgresql+psycopg://'):
         raise HTTPException(503, 'Set DATABASE_URL to a PostgreSQL psycopg connection URL.')
-    return create_engine(url, pool_pre_ping=True, connect_args={'connect_timeout': 5})
+    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5, pool_timeout=5,
+                         hide_parameters=True, connect_args={'connect_timeout': 5,
+                         'options': '-c statement_timeout=15000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=120000'})
 
 
 def get_session():

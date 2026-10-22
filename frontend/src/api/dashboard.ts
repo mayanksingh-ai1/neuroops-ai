@@ -1,3 +1,4 @@
+import { apiFetch } from './access';
 export type ApiComplaint = {
   complaint_id: string;
   title: string;
@@ -28,7 +29,7 @@ export type DashboardData = {
 const colors = ["#818cf8", "#a78bfa", "#38bdf8", "#2dd4bf", "#fbbf24"];
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(path, { signal: AbortSignal.timeout(5000) });
+  const response = await apiFetch(path, { signal: AbortSignal.timeout(5000) });
   if (!response.ok) throw new Error(`Request failed (${response.status})`);
   return response.json() as Promise<T>;
 }

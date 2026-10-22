@@ -1,0 +1,3 @@
+dataset,model,provider,question,response,reference,instructions,policy,rules,metadata
+synthetic-refund-demo,supplied-model-a,sample-only,What is the sample refund submission window?,Thirty days.,Thirty days.,Be concise.,,"{""max_words"":10}","{""sample"":""true"",""purpose"":""Synthetic demo; not company policy""}"
+synthetic-refund-demo,supplied-model-b,sample-only,What is the sample refund submission window?,Twenty days.,Thirty days.,Be concise.,,"{""max_words"":10}","{""sample"":""true"",""purpose"":""Synthetic demo; not company policy""}"

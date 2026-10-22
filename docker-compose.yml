@@ -1,40 +1,65 @@
+x-backend: &backend
+  build: ./backend
+  init: true
+  env_file: [.env]
+  environment:
+    APP_ENV: production
+    DATABASE_URL: ${DATABASE_URL:?Set a container DATABASE_URL using db as the hostname}
+    AUTH_USERS_JSON: ${AUTH_USERS_JSON:?Configure hashed user access tokens}
+  read_only: true
+  tmpfs: ['/tmp:size=64m,noexec,nosuid']
+  cap_drop: [ALL]
+  security_opt: ['no-new-privileges:true']
+  pids_limit: 128
+  mem_limit: 1g
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: '3'}
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "127.0.0.1:8080:80"
-    depends_on:
-      - backend
-  backend:
-    build: ./backend
-    environment:
-      DATABASE_URL: postgresql+psycopg://neuroops:local_dev_only_change_me@db:5432/neuroops
-      IMPORT_API_KEY: ${IMPORT_API_KEY:?Set IMPORT_API_KEY in your shell or .env before starting Compose}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      LLM_MODEL: ${LLM_MODEL:-}
-      AI_RULES_JSON: ${AI_RULES_JSON:-{}}
-    ports:
-      - "127.0.0.1:8000:8000"
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    depends_on:
-      db:
-        condition: service_healthy
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: neuroops
       POSTGRES_USER: neuroops
-      POSTGRES_PASSWORD: local_dev_only_change_me
-    ports:
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a strong unique database password}
+    volumes: ['postgres_data:/var/lib/postgresql/data']
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U neuroops -d neuroops"]
+      test: [CMD-SHELL, 'pg_isready -U neuroops -d neuroops']
       interval: 5s
       timeout: 5s
       retries: 10
-
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  migrate:
+    <<: *backend
+    command: [python, -m, alembic, upgrade, head]
+    restart: 'no'
+    healthcheck: {disable: true}
+    depends_on:
+      db: {condition: service_healthy}
+  backend:
+    <<: *backend
+    restart: unless-stopped
+    stop_grace_period: 35s
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      db: {condition: service_healthy}
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports: ['127.0.0.1:8080:8080']
+    read_only: true
+    tmpfs: ['/tmp:size=32m,noexec,nosuid']
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    pids_limit: 64
+    mem_limit: 128m
+    depends_on:
+      backend: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
 volumes:
   postgres_data:

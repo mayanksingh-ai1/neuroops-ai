@@ -2,6 +2,9 @@ import os
 from alembic import context
 from app.database import Base, get_engine
 from app.models import Complaint  # Register the model metadata.
+from app.knowledge_models import KnowledgeDocument, KnowledgeChunk
+from app.agent_models import AgentRun, AgentStep
+from app.evaluation_models import EvaluationCase, Evaluation, EvaluationReview, EvaluationComparison
 
 config = context.config
 

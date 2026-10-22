@@ -1,0 +1,6 @@
+complaint_id,title,category,status,priority,channel,received_date
+CMP-101,Damaged package received upon delivery,Damaged Product,open,high,Email,2026-10-18
+CMP-102,Subscription renewal charged twice without notification,Billing Issue,in_progress,medium,Web,2026-10-19
+CMP-103,Refund requested 14 days ago still not credited,Refund Issue,open,high,Chat,2026-10-19
+CMP-104,Wrong item sent in shipping box,Wrong Item,resolved,low,Phone,2026-10-20
+CMP-105,Order delivery delayed beyond estimated arrival,Delivery Delay,open,medium,Email,2026-10-21

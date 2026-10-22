@@ -3,6 +3,7 @@ import { AnalysisResult } from "./components/AnalysisResult";
 import { KnowledgeBase } from "./components/KnowledgeBase";
 import { AgentWorkspace } from "./components/AgentWorkspace";
 import { EvaluationWorkspace } from "./components/EvaluationWorkspace";
+import { ComplaintImportModal } from "./components/ComplaintImportModal";
 import { fetchDashboard, type DashboardData } from "./api/dashboard";
 import { useEffect, useState } from "react";
 import {
@@ -28,6 +29,7 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
+  Upload,
   X,
 } from "lucide-react";
 import {
@@ -210,6 +212,7 @@ function App() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [dataState, setDataState] = useState<"loading" | "ready" | "empty" | "error">("loading");
   const [reloadToken, setReloadToken] = useState(0);
+  const [showImport, setShowImport] = useState(false);
   useEffect(() => {
     let cancelled = false;
     setDataState("loading");
@@ -286,9 +289,14 @@ function App() {
               </h1>
               <p>Here’s what’s happening with your customer feedback.</p>
             </div>
-            <button className="export-button" onClick={() => window.print()}>
-              <Download size={16} /> Print dashboard
-            </button>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              <button className="export-button" onClick={() => setShowImport(true)}>
+                <Upload size={16} /> Import Complaints CSV
+              </button>
+              <button className="export-button" onClick={() => window.print()}>
+                <Download size={16} /> Print dashboard
+              </button>
+            </div>
           </div>
           {!["Knowledge Base", "AI Agent", "LLM Evaluation"].includes(active) && dataState !== "ready" && <div className="notice">
             <div className="notice-icon">
@@ -302,7 +310,18 @@ function App() {
                 {dataState === "empty" && "Import a validated CSV to populate this dashboard."}
               </span>
             </div>
-            {dataState !== "loading" && <button className="export-button" onClick={() => setReloadToken((value) => value + 1)}>Retry</button>}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+              {dataState === "empty" && (
+                <button
+                  className="export-button"
+                  style={{ background: "#4f46e5" }}
+                  onClick={() => setShowImport(true)}
+                >
+                  <Upload size={16} /> Import Complaints CSV
+                </button>
+              )}
+              {dataState !== "loading" && <button className="export-button" onClick={() => setReloadToken((value) => value + 1)}>Retry</button>}
+            </div>
           </div>}
           {active === "LLM Evaluation" ? <EvaluationWorkspace /> : active === "AI Agent" ? <AgentWorkspace /> : active === "Knowledge Base" ? <KnowledgeBase /> : active === "Complaint Analysis" ? (
             <section className="panel p-6" aria-label="Stored complaint intelligence">
@@ -311,10 +330,15 @@ function App() {
                 AI suggestions require human review. Priority follows configured rules.
                 An operator can classify complaints through the API.
               </p>
-              <button className="export-button mt-5" disabled={dataState === "loading"}
-                onClick={() => setReloadToken((value) => value + 1)}>
-                Refresh analysis
-              </button>
+              <div style={{ display: "flex", gap: "10px", marginTop: "20px", flexWrap: "wrap" }}>
+                <button className="export-button" disabled={dataState === "loading"}
+                  onClick={() => setReloadToken((value) => value + 1)}>
+                  Refresh analysis
+                </button>
+                <button className="export-button" onClick={() => setShowImport(true)}>
+                  <Upload size={16} /> Import Complaints CSV
+                </button>
+              </div>
               <div className="table-wrap mt-5">
                 <table>
                   <thead><tr><th>COMPLAINT</th><th>ORIGINAL CATEGORY / PRIORITY</th><th>AI ANALYSIS</th></tr></thead>
@@ -645,6 +669,13 @@ function App() {
           </footer>
         </div>
       </main>
+      <ComplaintImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        onSuccess={() => {
+          setReloadToken((val) => val + 1);
+        }}
+      />
     </div>
   );
 }

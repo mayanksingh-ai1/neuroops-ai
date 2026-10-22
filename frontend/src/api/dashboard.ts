@@ -50,3 +50,44 @@ export async function fetchDashboard(query = ""): Promise<DashboardData> {
     trend: trend.map((row) => ({ ...row, day: row.day.slice(5) })),
   };
 }
+
+export type ImportError = {
+  row: number;
+  fields?: Record<string, string>;
+  message?: string;
+};
+
+export type ImportResult = {
+  total_rows: number;
+  inserted: number;
+  duplicates: number;
+  invalid: number;
+  errors: ImportError[];
+  errors_truncated: boolean;
+};
+
+export async function importComplaintsCsv(file: File, importKey: string): Promise<ImportResult> {
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("CSV exceeds the 2 MiB limit.");
+  }
+  const response = await apiFetch("/api/complaints/import", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/csv",
+      "X-Import-Key": importKey.trim(),
+    },
+    body: file,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail = data?.detail;
+    const message =
+      typeof detail === "string"
+        ? detail
+        : Array.isArray(detail)
+          ? detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ")
+          : `Import failed (${response.status})`;
+    throw new Error(message);
+  }
+  return data as ImportResult;
+}

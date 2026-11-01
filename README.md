@@ -7,7 +7,14 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
 
-**Phase 8 validation complete:** Full-stack regression testing, live HTTP smoke testing on PostgreSQL, production TypeScript/Vite bundling, role-based access control, and portfolio documentation are fully audited and passing. See [PHASE8_FINAL_AUDIT.md](file:///C:/Users/mayank%20singh/Desktop/neuroops-ai/PHASE8_FINAL_AUDIT.md) for actual test counts and exact command executions, and [PORTFOLIO_GUIDE.md](file:///C:/Users/mayank%20singh/Desktop/neuroops-ai/PORTFOLIO_GUIDE.md) for system architecture, interview questions, and a 5-minute demonstration script.
+**Live Cloud Deployment & Project Links:**
+- **Live Cloud Web App (GitHub Pages):** [https://mayanksingh-ai1.github.io/neuroops-ai/](https://mayanksingh-ai1.github.io/neuroops-ai/)
+- **GitHub Repository:** [https://github.com/mayanksingh-ai1/neuroops-ai](https://github.com/mayanksingh-ai1/neuroops-ai)
+- **1-Click Cloud Deployment (Render Blueprint):** [`render.yaml`](render.yaml) (FastAPI backend + Managed PostgreSQL)
+- **Portfolio & Architecture Guide:** [PORTFOLIO_GUIDE.md](PORTFOLIO_GUIDE.md)
+- **Audit & Verification Report:** [PHASE8_FINAL_AUDIT.md](PHASE8_FINAL_AUDIT.md)
+
+**Phase 8 validation complete:** Full-stack regression testing, live HTTP smoke testing on PostgreSQL, production TypeScript/Vite bundling, role-based access control, and portfolio documentation are fully audited and passing. See [PHASE8_FINAL_AUDIT.md](PHASE8_FINAL_AUDIT.md) for actual test counts and exact command executions, and [PORTFOLIO_GUIDE.md](PORTFOLIO_GUIDE.md) for system architecture, interview questions, and a 5-minute demonstration script.
 
 Docker container execution, TLS termination, backup restoration drills, and live paid-provider validation remain unverified and are explicit blockers for public deployment.
 
@@ -106,6 +113,30 @@ Compose waits for PostgreSQL, runs the separate migration service, then starts F
 and the frontend after readiness succeeds. Open `http://localhost:8080`. Only the
 frontend port is published on loopback. Stop services with `docker compose down`;
 PostgreSQL data persists in its named volume. Do not add `-v` unless deliberately deleting data.
+
+### Cloud Deployment (Production)
+
+NeuroOps AI supports fully managed cloud hosting and automated continuous deployment:
+
+1. **Frontend on GitHub Pages (Live):**
+   - **Live URL:** [https://mayanksingh-ai1.github.io/neuroops-ai/](https://mayanksingh-ai1.github.io/neuroops-ai/)
+   - Hosted directly via the `gh-pages` branch on GitHub Pages.
+   - Built from production Vite bundle with relative asset resolution and dynamic backend routing.
+   - To connect the frontend to a cloud backend, configure `VITE_API_BASE_URL` in the environment.
+
+2. **1-Click Backend & PostgreSQL on Render:**
+   - The repository includes an Infrastructure-as-Code blueprint: [`render.yaml`](render.yaml).
+   - In Render Dashboard: Click **New +** &rarr; **Blueprint** &rarr; Select `neuroops-ai`.
+   - Render provisions:
+     - Managed PostgreSQL 16 database (`neuroops-postgres`).
+     - FastAPI production web service with automatic Alembic migrations (`alembic upgrade head`) and `/api/health` monitoring.
+
+3. **Secure Cloud Ingress via Cloudflare Tunnel:**
+   - To securely expose a running local/Docker instance to an external HTTPS URL:
+   ```powershell
+   .\cloudflared.exe tunnel --url http://127.0.0.1:8080
+   ```
+   - Cloudflare generates an encrypted `https://*.trycloudflare.com` URL without firewall port-forwarding.
 
 ## CSV import API
 
@@ -977,6 +1008,15 @@ URL-encode special password characters in the URL. Existing PostgreSQL volumes k
 their original password; changing an environment variable does not rotate a stored
 database user's password. Rotate the role explicitly with a database administrator.
 
+The Compose example starts with `MOCK_LLM_PROVIDER=true` and `LLM_MODEL=gpt-4o-mini`,
+so classification uses offline heuristics. This flag does not mock RAG, agent
+planning, or LLM judging; keep the API key empty to prevent paid OpenAI calls.
+For live OpenAI classification, set
+`MOCK_LLM_PROVIDER=false` and provide `OPENAI_API_KEY` only through the untracked root
+`.env` or a secret manager. The backend returns a configuration error instead of
+calling the provider when the key or model is missing. Never put the key in a `VITE_`
+variable or commit `.env` files.
+
 Compose runs four services: persistent PostgreSQL, a one-shot migration process,
 FastAPI, and Nginx/static React. The migration service applies `alembic upgrade head`
 before API readiness. Only `127.0.0.1:8080` is published; database/API ports are internal.
@@ -999,6 +1039,27 @@ Do not run `docker compose config` without `--quiet` in shared logs: resolved
 configuration can expose secrets. Docker environment variables are visible to host
 administrators; use your hosting platform's secret injection and restrict Docker access.
 `docker compose down` preserves the named database volume. `down -v` deletes it.
+
+### Database backup and restore drill
+
+The repository includes a confirmation-gated PowerShell wrapper around `pg_dump` and
+`psql`. It uses `DATABASE_URL` from the current shell and never writes credentials to
+the repository:
+
+```powershell
+$env:DATABASE_URL = 'postgresql://neuroops:<password>@127.0.0.1:5432/neuroops'
+.\scripts\backup_db.ps1 -Action verify
+.\scripts\backup_db.ps1 -Action backup
+# Restore only into a disposable/staging database, after reviewing the target:
+.\scripts\backup_db.ps1 -Action restore -BackupFile .\backups\neuroops-YYYYMMDD-HHMMSS.sql `
+  -TargetDatabaseUrl 'postgresql://neuroops:<password>@127.0.0.1:5432/neuroops_restore' `
+  -ConfirmRestore
+```
+
+Install PostgreSQL client tools so `pg_dump` and `psql` are on `PATH`. The restore
+command refuses to run without both an explicit target URL and `-ConfirmRestore`.
+Prefer restoring into a disposable database first and checking row counts/readiness;
+do not use `docker compose down -v` as a backup or recovery procedure.
 
 ### Database migrations and deployment sequence
 

@@ -682,7 +682,7 @@ function App() {
                     CSV validation accepts required columns and reports invalid rows.
                   </li>
                   <li>Duplicate complaint IDs are skipped without overwriting stored data.</li>
-                  <li>AI analysis features are still not implemented.</li>
+                  <li>AI analysis is operator-triggered and remains unverified until classified.</li>
                 </ul>
               </section>
             </>

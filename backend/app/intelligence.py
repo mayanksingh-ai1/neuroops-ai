@@ -22,8 +22,9 @@ very too but and is was has have been my the a with for""".split())
 
 
 class IntelligenceError(Exception):
-    def __init__(self, code: str, status: int = 502):
+    def __init__(self, code: str, status: int = 502, message: str | None = None):
         self.code, self.status = code, status
+        self.message = message or code.replace('_', ' ')
         super().__init__(code)
 
 
@@ -113,7 +114,7 @@ def classify(text: str, rules: Settings) -> tuple[ModelOutput, dict]:
     schema = ModelOutput.model_json_schema()
     schema['properties']['category']['enum'] = rules.categories
     try:
-        with httpx.Client(timeout=20, follow_redirects=False) as client:
+        with httpx.Client(timeout=20, follow_redirects=False, trust_env=False) as client:
             response = client.post(
                 'https://api.openai.com/v1/chat/completions',
                 headers={'Authorization': f'Bearer {key}'},
@@ -138,9 +139,23 @@ def classify(text: str, rules: Settings) -> tuple[ModelOutput, dict]:
     except httpx.RequestError:
         raise IntelligenceError('provider_unavailable', 502) from None
     if response.status_code == 429:
-        raise IntelligenceError('rate_limited', 429)
+        msg = "Provider rate limit or quota exceeded."
+        try:
+            err_body = response.json()
+            if isinstance(err_body, dict) and 'error' in err_body:
+                msg = err_body['error'].get('message', msg)
+        except Exception:
+            pass
+        raise IntelligenceError('rate_limited', 429, msg)
     if response.status_code in (401, 403):
-        raise IntelligenceError('provider_authentication', 503)
+        msg = "Provider authentication failed."
+        try:
+            err_body = response.json()
+            if isinstance(err_body, dict) and 'error' in err_body:
+                msg = err_body['error'].get('message', msg)
+        except Exception:
+            pass
+        raise IntelligenceError('provider_authentication', 503, msg)
     if not response.is_success:
         raise IntelligenceError('provider_error', 502)
     try:

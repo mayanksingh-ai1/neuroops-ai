@@ -97,7 +97,8 @@ class AccessControl:
         except HTTPException as exc:
             await JSONResponse({'detail': exc.detail}, status_code=exc.status_code)(scope, receive, send)
         except IntelligenceError as exc:
-            await JSONResponse({'detail': {'code': exc.code}}, status_code=exc.status)(scope, receive, send)
+            detail = {'code': exc.code, 'message': getattr(exc, 'message', exc.code.replace('_', ' '))}
+            await JSONResponse({'detail': detail}, status_code=exc.status)(scope, receive, send)
         finally:
             if token is not None:
                 principal.reset(token)

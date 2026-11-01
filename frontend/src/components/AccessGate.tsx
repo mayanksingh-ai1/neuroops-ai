@@ -11,7 +11,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
   const generation = useRef(0);
   useEffect(() => {
     const version = ++generation.current;
-    fetch('/api/auth/config', { cache: 'no-store', signal: AbortSignal.timeout(5000) }).then(async response => {
+    apiFetch('/api/auth/config', { cache: 'no-store', signal: AbortSignal.timeout(5000) }).then(async response => {
       if (!response.ok) throw new Error('Unable to read access configuration.');
       const config = await response.json();
       if (typeof config.required !== 'boolean') throw new Error('Invalid access configuration.');

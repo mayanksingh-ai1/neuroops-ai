@@ -6,6 +6,9 @@ x-backend: &backend
     APP_ENV: production
     DATABASE_URL: ${DATABASE_URL:?Set a container DATABASE_URL using db as the hostname}
     AUTH_USERS_JSON: ${AUTH_USERS_JSON:?Configure hashed user access tokens}
+    # Mock applies only to complaint classification, not RAG/agent/evaluation.
+    MOCK_LLM_PROVIDER: ${MOCK_LLM_PROVIDER:-true}
+    LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
   read_only: true
   tmpfs: ['/tmp:size=64m,noexec,nosuid']
   cap_drop: [ALL]

@@ -22,7 +22,8 @@ Workspace = Annotated[str, Depends(workspace)]
 
 
 def failure(exc: IntelligenceError):
-    raise HTTPException(exc.status, {'code': exc.code}) from None
+    detail = {'code': exc.code, 'message': getattr(exc, 'message', exc.code.replace('_', ' '))}
+    raise HTTPException(exc.status, detail) from None
 
 
 @router.get('/documents')

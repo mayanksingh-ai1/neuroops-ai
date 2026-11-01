@@ -25,7 +25,8 @@ async function request<T>(path: string, key: string, init: RequestInit = {}): Pr
     let code = `Request failed (${response.status})`;
     try {
       const body = await response.json();
-      if (typeof body.detail?.code === "string") code = body.detail.code.replace(/_/g, " ");
+      if (typeof body.detail?.message === "string") code = body.detail.message;
+      else if (typeof body.detail?.code === "string") code = body.detail.code.replace(/_/g, " ");
       else if (typeof body.detail === "string") code = body.detail;
     } catch { /* A proxy can return an HTML error page. */ }
     throw new Error(code);

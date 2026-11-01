@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "../api/access";
 
 /** This real health request is independent of the dashboard's mock figures. */
 export function HealthStatus() {
@@ -8,7 +9,7 @@ export function HealthStatus() {
   async function checkHealth() {
     setStatus("loading");
     try {
-      const response = await fetch("/api/health", {
+      const response = await apiFetch("/api/health", {
         signal: AbortSignal.timeout(5000),
       });
       if (!response.ok) throw new Error("API request failed");

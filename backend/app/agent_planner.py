@@ -28,6 +28,16 @@ def redact_task(task: str) -> str:
 def plan_task(task: str) -> tuple[Plan, dict]:
     key = os.getenv('OPENAI_API_KEY', '').strip()
     model = (os.getenv('AGENT_LLM_MODEL', '').strip() or os.getenv('LLM_MODEL', '').strip())
+    mock_mode = os.getenv('MOCK_LLM_PROVIDER', '').strip().lower() in ('true', '1', 'yes')
+    if mock_mode and not key:
+        return Plan(
+            supported=True,
+            reason="Mock investigation plan examining recent complaints and knowledge base policy.",
+            analytics=True,
+            knowledge=True,
+            days=30,
+            top_k=4,
+        ), {'provider': 'mock', 'model': 'mock-planner-v1', 'prompt_version': '1'}
     if not key or not model:
         raise IntelligenceError('missing_agent_configuration', 503)
     body = provider.post_json('https://api.openai.com/v1/chat/completions', {

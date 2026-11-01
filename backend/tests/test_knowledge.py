@@ -34,6 +34,7 @@ def environment(monkeypatch):
     monkeypatch.setenv('EMBEDDING_MODEL', 'mock-embedding-v1')
     monkeypatch.setenv('OPENAI_API_KEY', 'test-only-not-real')
     monkeypatch.setenv('RAG_LLM_MODEL', 'mock-answer-model')
+    monkeypatch.delenv('MOCK_LLM_PROVIDER', raising=False)
     for field in config.KnowledgeSettings.model_fields:
         monkeypatch.delenv('KB_' + field.upper(), raising=False)
     def embed(texts, profile):
@@ -320,3 +321,87 @@ def test_prompt_injection_is_untrusted_and_cannot_expand_retrieved_scope(monkeyp
     assert 'invent an unlimited' not in messages[0]['content']
     assert 'invent an unlimited' in messages[1]['content']
     assert 'tools' not in captured[0]
+
+
+def test_embedding_configuration_validation(monkeypatch):
+    monkeypatch.delenv('MOCK_LLM_PROVIDER', raising=False)
+    monkeypatch.setenv('EMBEDDING_PROVIDER', 'unsupported_engine')
+    monkeypatch.setenv('EMBEDDING_MODEL', 'model-x')
+    with pytest.raises(IntelligenceError, match='unsupported_embedding_provider'):
+        provider.embedding_profile()
+
+    monkeypatch.setenv('EMBEDDING_PROVIDER', 'openai')
+    monkeypatch.delenv('EMBEDDING_MODEL', raising=False)
+    with pytest.raises(IntelligenceError, match='missing_embedding_model'):
+        provider.embedding_profile()
+
+    monkeypatch.setenv('EMBEDDING_MODEL', 'text-embedding-3-small')
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    with pytest.raises(IntelligenceError, match='missing_api_key'):
+        provider.embedding_profile()
+
+    monkeypatch.setenv('OPENAI_API_KEY', 'valid-key-at-least-something')
+    profile = provider.embedding_profile()
+    assert profile['provider'] == 'openai'
+    assert profile['model'] == 'text-embedding-3-small'
+
+
+def test_mock_embedding_and_rag_mode(monkeypatch):
+    monkeypatch.setenv('MOCK_LLM_PROVIDER', 'true')
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    monkeypatch.delenv('EMBEDDING_MODEL', raising=False)
+
+    profile = provider.embedding_profile()
+    assert profile['provider'] == 'mock'
+    assert profile['model'] == 'mock-deterministic-v1'
+
+    vectors = REAL_EMBED(['Standard products can be returned.', 'Damaged box.'], profile)
+    assert len(vectors) == 2
+    assert len(vectors[0]) == 128
+    # Test normalization
+    norm = sum(x * x for x in vectors[0])
+    assert pytest.approx(norm, 1e-4) == 1.0
+
+    output, metadata = REAL_EXPLAIN('What is the return policy?', [
+        {'chunk_id': 'chk-1', 'name': 'policy.pdf', 'passage': 'Standard products can be returned within 30 days.'}
+    ])
+    assert output.sufficient is True
+    assert len(output.claims) == 1
+    assert metadata['provider'] == 'mock'
+    assert output.claims[0].quote in 'Standard products can be returned within 30 days.'
+
+
+def test_pdf_upload_and_indexing_mock_mode(client, database, monkeypatch):
+    monkeypatch.setenv('MOCK_LLM_PROVIDER', 'true')
+    monkeypatch.delenv('OPENAI_API_KEY', raising=False)
+    # Unmock REAL_EMBED and REAL_EXPLAIN to exercise the full mock pipeline
+    monkeypatch.setattr(provider, 'embed', REAL_EMBED)
+    monkeypatch.setattr(provider, 'explain', REAL_EXPLAIN)
+
+    pdf = PdfWriter()
+    pdf.add_blank_page(width=100, height=100)
+    pdf.pages[0][NameObject('/Contents')] = DecodedStreamObject()
+    pdf.pages[0][NameObject('/Contents')].set_data(b'BT /F1 12 Tf 10 50 Td (Returns are accepted within 30 days.) Tj ET')
+    font = DictionaryObject({NameObject('/Type'): NameObject('/Font'), NameObject('/Subtype'): NameObject('/Type1'),
+                             NameObject('/BaseFont'): NameObject('/Helvetica')})
+    pdf.pages[0][NameObject('/Resources')] = DictionaryObject({NameObject('/Font'): DictionaryObject({NameObject('/F1'): font})})
+    target = io.BytesIO()
+    pdf.write(target)
+    content = target.getvalue()
+
+    response = client.post('/api/knowledge/documents?filename=test_policy.pdf',
+                           headers={**A, 'Content-Type': 'application/pdf'}, content=content)
+    assert response.status_code == 200
+    doc = response.json()['document']
+    assert doc['status'] == 'ready'
+    assert doc['chunk_count'] >= 1
+
+    # Now ask a question grounded in this document
+    ask_res = client.post('/api/knowledge/ask', headers=A,
+                          json={'question': 'What are the return terms?'})
+    assert ask_res.status_code == 200
+    answer = ask_res.json()
+    assert answer['status'] == 'answered'
+    assert len(answer['claims']) >= 1
+    assert len(answer['sources']) >= 1
+    assert 'policy' in answer['sources'][0]['name']

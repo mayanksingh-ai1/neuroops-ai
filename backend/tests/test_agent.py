@@ -32,6 +32,7 @@ def config(monkeypatch):
     monkeypatch.setenv('LLM_MODEL', 'mock-model')
     for field in ('MAX_STEPS', 'TIMEOUT_SECONDS', 'RETRIES', 'LLM_MODEL'):
         monkeypatch.delenv('AGENT_' + field, raising=False)
+    monkeypatch.delenv('MOCK_LLM_PROVIDER', raising=False)
     _calls.clear()
     monkeypatch.setattr(service, 'plan_task', lambda task: (planner.Plan(
         supported=True, reason='Overall complaint trends and refund policy.', analytics=True, knowledge=True, days=30, top_k=4), {'model': 'mock'}))

@@ -10,5 +10,6 @@ coverage/
 .phase2-pgdata/
 *.tsbuildinfo
 *.log
+backups/
 
 cloudflared.exe

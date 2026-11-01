@@ -1,18 +1,27 @@
 # NeuroOps AI — Enterprise Complaint Intelligence & AI Operations Platform
 
-[![Verification](https://img.shields.io/badge/Phase_8_Audit-PASS-success)](#phase-8-final-validation--portfolio-readiness)
-[![Python](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.3-cyan)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)](https://www.postgresql.org/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-brightgreen?style=for-the-badge&logo=github)](https://mayanksingh-ai1.github.io/neuroops-ai/)
+[![Audit Status](https://img.shields.io/badge/Verification-PASS_100%25-success?style=for-the-badge)](#phase-8-final-validation--portfolio-readiness)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-**Live Cloud Deployment & Project Links:**
-- **Live Cloud Web App (GitHub Pages):** [https://mayanksingh-ai1.github.io/neuroops-ai/](https://mayanksingh-ai1.github.io/neuroops-ai/)
-- **GitHub Repository:** [https://github.com/mayanksingh-ai1/neuroops-ai](https://github.com/mayanksingh-ai1/neuroops-ai)
-- **1-Click Cloud Deployment (Render Blueprint):** [`render.yaml`](render.yaml) (FastAPI backend + Managed PostgreSQL)
-- **Portfolio & Architecture Guide:** [PORTFOLIO_GUIDE.md](PORTFOLIO_GUIDE.md)
-- **Audit & Verification Report:** [PHASE8_FINAL_AUDIT.md](PHASE8_FINAL_AUDIT.md)
+---
+
+> 🚀 **LIVE DEPLOYED CLOUD APPLICATION:**
+### [👉 https://mayanksingh-ai1.github.io/neuroops-ai/ 👈](https://mayanksingh-ai1.github.io/neuroops-ai/)
+> **Click the link above to immediately launch the live interactive platform.** Explore complaint trends, operational triage, semantic RAG search across company policy documents, autonomous investigation agent runs, and LLM evaluation benchmarks directly in your browser.
+
+---
+
+### 📌 Project Quick Links
+- 🌐 **Live Web Application:** [https://mayanksingh-ai1.github.io/neuroops-ai/](https://mayanksingh-ai1.github.io/neuroops-ai/)
+- 💻 **Source Code Repository:** [https://github.com/mayanksingh-ai1/neuroops-ai](https://github.com/mayanksingh-ai1/neuroops-ai)
+- ☁️ **1-Click Render Cloud Blueprint:** [`render.yaml`](render.yaml) *(Provisions FastAPI Backend + Managed PostgreSQL 16)*
+- 📑 **Comprehensive Audit & Verification:** [PHASE8_FINAL_AUDIT.md](PHASE8_FINAL_AUDIT.md)
+- 🎯 **Architecture & Portfolio Interview Guide:** [PORTFOLIO_GUIDE.md](PORTFOLIO_GUIDE.md)
 
 **Phase 8 validation complete:** Full-stack regression testing, live HTTP smoke testing on PostgreSQL, production TypeScript/Vite bundling, role-based access control, and portfolio documentation are fully audited and passing. See [PHASE8_FINAL_AUDIT.md](PHASE8_FINAL_AUDIT.md) for actual test counts and exact command executions, and [PORTFOLIO_GUIDE.md](PORTFOLIO_GUIDE.md) for system architecture, interview questions, and a 5-minute demonstration script.
 

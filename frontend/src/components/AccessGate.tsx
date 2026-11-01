@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, type ReactNode, type FormEvent } from 'rea
 import { apiFetch, getCustomApiBase, setAccessToken, setCustomApiBase } from '../api/access';
 
 export function AccessGate({ children }: { children: ReactNode }) {
-  const [required, setRequired] = useState<boolean | null>(null);
-  const [connected, setConnected] = useState(false);
+  const isGitHubPages = typeof window !== 'undefined' && window.location.hostname.includes('github.io');
+  const [required, setRequired] = useState<boolean | null>(isGitHubPages ? false : null);
+  const [connected, setConnected] = useState(isGitHubPages);
   const [token, setToken] = useState('');
-  const [identity, setIdentity] = useState('');
+  const [identity, setIdentity] = useState(isGitHubPages ? 'Demo Operator · operator · demo-workspace' : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [apiUrl, setApiUrl] = useState(getCustomApiBase());
@@ -29,9 +30,11 @@ export function AccessGate({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    checkConfig();
+    if (!isGitHubPages) {
+      checkConfig();
+    }
     return () => { generation.current++; setAccessToken(''); };
-  }, []);
+  }, [isGitHubPages]);
 
   async function connect(event: FormEvent) {
     event.preventDefault();
@@ -60,17 +63,25 @@ export function AccessGate({ children }: { children: ReactNode }) {
 
   function enterDemoMode() {
     setConnected(true);
+    setRequired(false);
     setIdentity('Demo Operator · operator · demo-workspace');
   }
 
-  if (required === false) return <>{children}</>;
-  if (connected) {
+  if (required === false || connected) {
     return (
       <>
-        <div className="access-banner">
-          <span>{identity}</span>
-          <button onClick={() => { setAccessToken(''); setConnected(false); setIdentity(''); }}>Sign out</button>
-        </div>
+        {isGitHubPages && (
+          <div className="access-banner" style={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
+            <span>🌐 <strong>Live Cloud Preview:</strong> Interactive Standalone Demo Mode</span>
+            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Backend: Local / Render / Docker</span>
+          </div>
+        )}
+        {!isGitHubPages && connected && (
+          <div className="access-banner">
+            <span>{identity}</span>
+            <button onClick={() => { setAccessToken(''); setConnected(false); setIdentity(''); }}>Sign out</button>
+          </div>
+        )}
         {children}
       </>
     );
